@@ -1,6 +1,6 @@
-#Quixo Python
+# Quixo Python
 
-##Moves
+## Moves
 
 Move:Tuple = (row,col)
 
@@ -8,7 +8,7 @@ Only blank and self pieces can be moved.
 Only edge pieces can be moved.
 
 
-###Illegal moves:
+### Illegal moves:
 if row is 0 cant slide down
 if row is board_size cant slide up
 if col is 0 cant slide right
@@ -17,18 +17,18 @@ if col is board_size cant slide down
 
 
 
-##State
+## State
 
-###Pieces
+### Pieces
 0 = Blank
 1 = X
 2 = O
 
-###Turn
+### Turn
 0 = X
 1 = O
 
-##Value
+## Value
 
 V = f(state)
 
