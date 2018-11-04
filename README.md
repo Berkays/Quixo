@@ -7,13 +7,13 @@ Implementation of turn based game Quixo in Python. Minimax algorithm is used for
 
 **play(piece,move)**\
 **piece**: tuple = (row,col)\
-**move**: int = Direction\
+**move**: int = Direction
 
   #### Directions
   SLIDE_LEFT = 0\
   SLIDE_UP = 1\
   SLIDE_RIGHT = 2\
-  SLIDE_DOWN = 3\
+  SLIDE_DOWN = 3
   
 ### Illegal moves:
 
@@ -23,30 +23,30 @@ Only edge pieces can be moved.\
 if row is 0 cant slide down\
 if row is board_size cant slide up\
 if col is 0 cant slide right\
-if col is board_size cant slide down\
+if col is board_size cant slide down
 
 ## State
 
 ### Piece Values
 
-0 = Blank\
+0 = Blank
 
-1 = X\
+1 = X
 
-2 = O\
+2 = O
 
 ### Turn
 
-0 = X\
+0 = X
 
-1 = O\ 
+1 = O 
 
 ## Board Value
 
-V = f(state)\
+V = f(state)
 
-V = -1 (X wins)\
-V = 1 (O wins)\
+V = -1 (X wins)
+V = 1 (O wins)
 
 ## Board Methods
 
