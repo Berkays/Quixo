@@ -9,29 +9,63 @@ MIN_PLAYER = 2 # (Player:O)
 # SLIDE_RIGHT = 2
 # SLIDE_DOWN = 3
 
+def input_map(inp):
+    split = inp.split(' ')
+    try:
+        piece = (int(split[0]),int(split[1]))
+        move = split[2]
+        
+        if(move == "left"):
+            move = 0
+        elif(move == "up"):
+            move = 1
+        elif(move == "right"):
+            move = 2
+        elif(move == "down"):
+            move = 3
+        
+        return (piece,move)
+    except:
+        return None
 if __name__ == "__main__":
-    iteration = 5
+    iteration = 10
     xWins = 0
     oWins = 0
-    
+
+#COMPUTER VS COMPUTER
     for i in range(0,iteration):
         gameState = Board()
-        depth = 1
-        moveCount = 0
         while True:
-            move = bestMove(gameState,gameState.turn,depth)
+            move = bestMove(gameState,gameState.turn)
             gameState.play(move[0],move[1])
-            moveCount += 1
-            depth = int(moveCount / 10) + 1
-            print(depth)
             gameState.printBoard()
             winner = gameState.isGameEnd()
             if(winner == MAX_PLAYER):
                 xWins += 1
+                print(f"X Wins: {xWins}\nO Wins: {oWins}")
                 break
             elif(winner == MIN_PLAYER):
                 oWins += 1
+                print(f"X Wins: {xWins}\nO Wins: {oWins}")
                 break
 
 
-    print(f"X Wins: {xWins}\nO Wins: {oWins}")
+#PLAYER VS COMPUTER
+    #gameState = Board()
+    # while True:
+    #     move = bestMove(gameState,gameState.turn)
+    #     gameState.play(move[0],move[1])
+    #     gameState.printBoard()
+    #     winner = gameState.isGameEnd()
+    #     if(winner is not None):
+    #         print(winner)
+    #         break
+    #     valid = -1
+    #     while(valid == -1):
+    #         inp = input("Your turn: ")
+    #         (piece,umove) = input_map(inp)
+    #         valid = gameState.play(piece,umove)
+    #     winner = gameState.isGameEnd()
+    #     if(winner is not None):
+    #         print(winner)
+    #         break
