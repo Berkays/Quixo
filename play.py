@@ -9,6 +9,11 @@ MIN_PLAYER = 2 # (Player:O)
 # SLIDE_RIGHT = 2
 # SLIDE_DOWN = 3
 
+AI_PLAYER = [(5,0),(4,18),(3,22),(2,28),(1,40)]
+BAD_AI_PLAYER = [(2,0),(1,30)]
+WORST_AI_PLAYER = [(1,0)]
+
+
 def input_map(inp):
     split = inp.split(' ')
     try:
@@ -36,7 +41,7 @@ if __name__ == "__main__":
     for i in range(0,iteration):
         gameState = Board()
         while True:
-            move = bestMove(gameState,gameState.turn)
+            move = bestMove(gameState,gameState.turn,BAD_AI_PLAYER)
             gameState.play(move[0],move[1])
             gameState.printBoard()
             winner = gameState.isGameEnd()
