@@ -1,5 +1,6 @@
 import random
 import math
+import numpy as np
 from board import Board
 
 MAX_PLAYER = 1 # (Player:X)
@@ -8,22 +9,21 @@ MIN_PLAYER = 2 # (Player:O)
 def minimax(board,player,alpha,beta,depth):
     isTerminal = board.isGameEnd()
     if(isTerminal == 1): 
-        return 1 #Maximizer won(X)
+        return 100 #Maximizer won(X)
     elif(isTerminal == 2):
-        return -1 #Minimizer Won(O)
+        return -100 #Minimizer Won(O)
     if(depth == 0):
-        return 0
-        # frequency = np.unique(board.board,return_counts=True)
-        # try:
-        #     if(frequency[1][1] > frequency[1][2]):
-        #         return 1
-        #     else:
-        #         return -1
-        # except:
-        #     if(frequency[1][0] > frequency[1][1]):
-        #         return 1
-        #     else:
-        #         return -1
+        frequency = np.unique(board.board,return_counts=True)
+        try:
+            if(frequency[1][1] > frequency[1][2]):
+                return 1
+            else:
+                return -1
+        except:
+            if(frequency[1][0] > frequency[1][1]):
+                return 1
+            else:
+                return -1
     if(player == MAX_PLAYER):
         for move in board.getPossibleMoves():
             s = Board(board)
@@ -47,19 +47,21 @@ def minimax(board,player,alpha,beta,depth):
         
         return beta
 
-def bestMove(board,player,depth):
+def bestMove(board,player,depthLevels):
     alpha = -math.inf
     beta = math.inf
     moves = []
     possibleMoves = board.getPossibleMoves()
-    if(len(possibleMoves) > 30):
-        depth = 2
-    elif(len(possibleMoves) > 20):
-        depth = 3
-    elif(len(possibleMoves) > 14):
-        depth = 4
-    else:
-        depth = 5
+    moveCount = len(possibleMoves)
+    
+    # Iterative deepening based on possible move count
+    depth = 0
+    for depthLvl in depthLevels:
+        if(moveCount > depthLvl[1]):
+            depth = depthLvl[0]
+        else:
+            break
+
     if(player == MAX_PLAYER):
         for move in possibleMoves:
             s = Board(board)
