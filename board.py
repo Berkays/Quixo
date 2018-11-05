@@ -24,13 +24,14 @@ class Board(object):
             self.turn = board.turn
 
     def play(self,piece,move):
-        # legalMove = self.checkMove(piece,move)
-        # if(not legalMove):
-        #     raise Exception('Illegal Move')
-
+        legalMove = self.checkMove(piece,move)
+        if(not legalMove):
+            #raise Exception('Illegal Move')
+            return -1
         self.board[piece] = self.turn
         self.shift(piece,move)
         self.changeTurn()
+        return 1
 
     def checkMove(self,piece,move):
         #Only blank and owned pieces
@@ -121,7 +122,7 @@ class Board(object):
 
         shuffle(allMoves)
 
-        return allMoves       
+        return allMoves      
 
     def printTurn(self):
         if(self.turn == self.X):
