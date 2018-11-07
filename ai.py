@@ -1,18 +1,63 @@
-import random
 import math
+import hashlib
+import os
+import pickle
 import numpy as np
 from board import Board
 
-MAX_PLAYER = 1 # (Player:X)
-MIN_PLAYER = 2 # (Player:O)
+MAX_PLAYER = Board.X # (Player:X)
+MIN_PLAYER = Board.O # (Player:O)
+bestMove = None
+transpositionPath = "t.dat"
+transpositionTable = {}
 
 def minimax(board,player,alpha,beta,depth):
+    global bestMove
+
+    score = evaluate(board,depth)
+    if(score is not None):
+        return score
+
+    depth -= 1
+
+    scores = []
+    moves = []
+    if(player == MAX_PLAYER):
+        for move in board.getPossibleMoves():
+            s = Board(board)
+            s.play(move[0],move[1])
+            val = minimax(s,s.turn,alpha,beta,depth)
+            scores.append(val)
+            moves.append(move)
+            if(val > alpha):
+                alpha = val
+            if(alpha >= beta):
+                bestMove = moves[scores.index(max(scores))]
+                return alpha
+        bestMove = moves[scores.index(max(scores))]
+        return alpha
+    else:
+        for move in board.getPossibleMoves():
+            s = Board(board)
+            s.play(move[0],move[1])
+            val = minimax(s,s.turn,alpha,beta,depth)
+            scores.append(val)
+            moves.append(move)
+            if(val < beta):
+                beta = val
+            if(beta <= alpha):
+                bestMove = moves[scores.index(min(scores))]
+                return beta
+        bestMove = moves[scores.index(min(scores))]
+        return beta
+
+def evaluate(board,depth):
     isTerminal = board.isGameEnd()
-    if(isTerminal == 1): 
-        return 100 #Maximizer won(X)
-    elif(isTerminal == 2):
-        return -100 #Minimizer Won(O)
-    if(depth == 0):
+    if(isTerminal == MAX_PLAYER):
+        return 1 + depth #Maximizer won(X)
+    elif(isTerminal == MIN_PLAYER):
+        return -1 - depth #Minimizer Won(O)
+    elif(depth == 0):
         frequency = np.unique(board.board,return_counts=True)
         try:
             if(frequency[1][1] > frequency[1][2]):
@@ -24,62 +69,65 @@ def minimax(board,player,alpha,beta,depth):
                 return 1
             else:
                 return -1
-    if(player == MAX_PLAYER):
-        for move in board.getPossibleMoves():
-            s = Board(board)
-            s.play(move[0],move[1])
-            val = minimax(s,s.turn,alpha,beta,depth - 1)
-            if(val > alpha):
-                alpha = val	
-            if(alpha >= beta):
-                return alpha
-        
-        return alpha
     else:
-        for move in board.getPossibleMoves():
-            s = Board(board)
-            s.play(move[0],move[1])
-            val = minimax(s,s.turn,alpha,beta,depth - 1)
-            if(val < beta):
-                beta = val
-            if(beta <= alpha):
-                return beta
-        
-        return beta
+        return None
 
-def bestMove(board,player,depthLevels):
-    alpha = -math.inf
-    beta = math.inf
-    moves = []
+def getBestMove(board,player,depthLevels,useTransposition):
     possibleMoves = board.getPossibleMoves()
-    moveCount = len(possibleMoves)
-    
+    possibleMoveCount = len(possibleMoves)
+
     # Iterative deepening based on possible move count
     depth = 0
     for depthLvl in depthLevels:
-        if(moveCount > depthLvl[1]):
+        if (possibleMoveCount > depthLvl[1]):
             depth = depthLvl[0]
         else:
             break
 
-    if(player == MAX_PLAYER):
-        for move in possibleMoves:
-            s = Board(board)
-            s.play(move[0],move[1])
-            val = minimax(s,s.turn,-math.inf,math.inf,depth)
-            if(val > alpha):
-                alpha = val
-                moves = [move]
-            elif(val == alpha):
-                moves.append(move) 
+    if(useTransposition and depth > 3):
+        move = getMoveFromTranspositionTable(board)
+        if (move is not None):
+            return move
+
+    minimax(board,board.turn,-math.inf,math.inf,depth)
+
+    if(useTransposition and depth > 3):
+        addToTranspositionTable(board,bestMove)
+
+    return bestMove
+
+def loadTranspositionTable():
+    global transpositionTable
+    if (os.path.isfile(transpositionPath)):
+        tableFile = open(transpositionPath,mode='rb')
+        transpositionTable = pickle.load(tableFile)
+        tableFile.close()
+        print("Loaded transposition table")
+
+def saveTranspositionTable():
+    global transpositionTable
+    tableFile = open(transpositionPath, mode='wb')
+    pickle.dump(transpositionTable,tableFile)
+    tableFile.close()
+    print("Saved transposition table")
+
+def addToTranspositionTable(state,move):
+    global transpositionTable
+    boardData = state.board.tobytes()
+    turnStr = str(state.turn)
+    hash = hashlib.md5(boardData).hexdigest()
+    hash += turnStr
+    if(hash not in transpositionTable):
+        transpositionTable[hash] = move
+        print("Move added to table")
+
+def getMoveFromTranspositionTable(state):
+    global transpositionTable
+    boardData = state.board.tobytes()
+    turnStr = str(state.turn)
+    hash = hashlib.md5(boardData).hexdigest()
+    hash += turnStr
+    if(hash in transpositionTable):
+        return transpositionTable[hash]
     else:
-        for move in possibleMoves:
-            s = Board(board)
-            s.play(move[0],move[1])
-            val = minimax(s,s.turn,-math.inf,math.inf,depth)
-            if(val < beta):
-                beta = val
-                moves = [move]
-            elif(val == beta):
-                moves.append(move)
-    return moves[random.randint(0,len(moves) - 1)]
+        return None
