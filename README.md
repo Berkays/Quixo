@@ -37,16 +37,16 @@ if col is board_size cant slide down
 
 ### Turn
 
-0 = X
+1 = X
 
-1 = O 
+2 = O 
 
 ## Board Value
 
 V = f(state)
 
-V = -1 (X wins)
-V = 1 (O wins)
+V = 1 (X wins)\
+V = -1 (O wins)
 
 ## Board Methods
 
