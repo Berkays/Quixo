@@ -26,12 +26,12 @@ class Board(object):
     def play(self,piece,move):
         legalMove = self.checkMove(piece,move)
         if(not legalMove):
-            #raise Exception('Illegal Move')
-            return -1
+            return False
+
         self.board[piece] = self.turn
         self.shift(piece,move)
         self.changeTurn()
-        return 1
+        return True
 
     def checkMove(self,piece,move):
         #Only blank and owned pieces
@@ -101,17 +101,17 @@ class Board(object):
 
     def getPossibleMoves(self):
         if(self.turn == self.X):
-            arg = self.O 
+            opponent = self.O 
         else:
-            arg = self.X
+            opponent = self.X
 
-        edgeMatrix = np.full((5,5),arg)
+        edgeMatrix = np.full((5,5),opponent)
         edgeMatrix[0,:] = self.board[0,:]
         edgeMatrix[4,:] = self.board[4,:]
         edgeMatrix[:,0] = self.board[:,0]
         edgeMatrix[:,4] = self.board[:,4]
 
-        edgeIndices = np.where(edgeMatrix != arg)
+        edgeIndices = np.where(edgeMatrix != opponent)
         edgeIndices = np.column_stack((edgeIndices[0],edgeIndices[1]))
         allMoves = []
         for piece in edgeIndices:
@@ -139,3 +139,9 @@ class Board(object):
             else:
                 return 'O'
         print(np.array2string(self.board,formatter = {'all': valToChar}))
+
+    def printWinner(self):
+        if(self.turn == Board.X):
+            print("Winner is X")
+        elif(self.turn == Board.O):
+            print("Winner is O")
