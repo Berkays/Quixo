@@ -1,5 +1,5 @@
+import time
 import numpy as np
-from random import shuffle
 
 class Board(object):
     BOARD_SIZE = 4 # 0 indexed
@@ -15,10 +15,10 @@ class Board(object):
     X = 1
     O = 2
 
-    def __init__(self,board=None):
-        self.turn = self.X
+    def __init__(self,board=None,turn = 1):
         if(board == None):
             self.board = np.zeros((5,5),dtype=int)
+            self.turn = turn
         else:
             self.board = np.copy(board.board)
             self.turn = board.turn
@@ -26,12 +26,11 @@ class Board(object):
     def play(self,piece,move):
         legalMove = self.checkMove(piece,move)
         if(not legalMove):
-            return False
+            raise Exception(f"Illegal Move. {piece},{move}")
 
         self.board[piece] = self.turn
         self.shift(piece,move)
         self.changeTurn()
-        return True
 
     def checkMove(self,piece,move):
         #Only blank and owned pieces
@@ -84,8 +83,7 @@ class Board(object):
         return None
       
     def getPossiblePieceMoves(self,piece):
-        row = piece[0]
-        col = piece[1]
+        row,col = piece
         possibleMoves = []
 
         if(row < self.BOARD_SIZE):
@@ -120,7 +118,7 @@ class Board(object):
             for move in moves:
                 allMoves.append((piece,move))
 
-        shuffle(allMoves)
+        np.random.shuffle(allMoves)
 
         return allMoves      
 
@@ -139,9 +137,20 @@ class Board(object):
             else:
                 return 'O'
         print(np.array2string(self.board,formatter = {'all': valToChar}))
+        print()
 
     def printWinner(self):
         if(self.turn == Board.X):
             print("Winner is X")
         elif(self.turn == Board.O):
             print("Winner is O")
+
+    def directionToText(self,direction):
+        if(direction == 0):
+            return "SLIDE_LEFT"
+        elif(direction == 1):
+            return "SLIDE_UP"
+        elif(direction == 2):
+            return "SLIDE_RIGHT"
+        elif(direction == 3):
+            return "SLIDE_DOWN"
