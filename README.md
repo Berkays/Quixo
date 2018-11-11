@@ -1,11 +1,26 @@
 
 # Quixo Python
 
-Implementation of turn based game Quixo in Python. Minimax algorithm is used for computer play.
+Implementation of turn based game Quixo in Python. Minimax with alpha beta pruning algorithm is used for computer play.
 
+## Playing
+
+Pass any player instance from players.py to play.py<br><br>
+***Random vs Random***
+```
+# 100 Iterations
+# play.py
+play(RandomPlayer(),RandomPlayer(),100)
+```
+***AI vs Random***
+```
+# 100 Iterations
+# play.py
+play(AI_Player(GOOD_AI_PLAYER),RandomPlayer(),100)
+```
 ## Moves
 
-**play(piece,move)**\
+**play**(piece,move)\
 **piece**: tuple = (row,col)\
 **move**: int = Direction
 
@@ -41,12 +56,17 @@ if col is board_size cant slide down
 
 2 = O 
 
-## Board Value
+## Value Function
 
-V = f(state)
+V = evaluate(board)
 
-V = 1 (X wins)\
-V = -1 (O wins)
+### Game Terminal Values
+V = 100 + depth (X wins with minimum number of movements)\
+V = - (100 + depth) (O wins with minimum number of movements)
+
+### Depth Reach Values
+More owned pieces on the board is usually better in initial game states.\
+V = (X Piece Count) - (O Piece Count)
 
 ## Board Methods
 
