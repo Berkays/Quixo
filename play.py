@@ -1,100 +1,76 @@
 import time
+import sys
+import signal
 from board import Board
-from ai import getBestMove,saveTranspositionTable,loadTranspositionTable
+from players import AI_Player,RandomPlayer,Human_Player
+from ai import loadTranspositionTable,saveTranspositionTable
 
-MAX_PLAYER = Board.X # (Player:X)
-MIN_PLAYER = Board.O # (Player:O)
-
-# Moves:
-# SLIDE_LEFT = 0
-# SLIDE_UP = 1
-# SLIDE_RIGHT = 2
-# SLIDE_DOWN = 3
+# CTRL + C Handler
+stopPlay = False
+def signalHandler(signal,frame):
+    global stopPlay
+    stopPlay = True
 
 GOD = [(6,0),(4,22),(1,32)]
-GOOD_AI_PLAYER = [(5,0),(4,18),(3,23),(2,29),(1,34)]
-BAD_AI_PLAYER = [(3,0),(2,24),(1,32)]
-WORST_AI_PLAYER = [(1,0)]
+GOOD_AI_PLAYER = [(5,0),(4,17),(3,22),(2,29),(1,36)]
+BAD_AI_PLAYER = [(2,0),(1,30)]
 
-def input_map(inp):
-    split = inp.split(' ')
-    try:
-        piece = (int(split[0]),int(split[1]))
-        move = split[2]
-        
-        if(move == "left"):
-            move = 0
-        elif(move == "up"):
-            move = 1
-        elif(move == "right"):
-            move = 2
-        elif(move == "down"):
-            move = 3
-        
-        return (piece,move)
-    except:
-        return None
+DEPTH_1_PLAYER = [(1,0)]
+DEPTH_2_PLAYER = [(2,0)]
+DEPTH_3_PLAYER = [(3,0)]
+DEPTH_4_PLAYER = [(4,0)]
 
-def computer_computer_play(iteration,ai_player,useTransposition):
+def play(player1,player2,iteration,transposition=False):
+    global stopPlay
+
+    if(transposition):
+        loadTranspositionTable()
+
     startTime = time.time()
+
+    signal.signal(signal.SIGINT,signalHandler)
 
     xWins = 0
     oWins = 0
     
-    if(useTransposition):
-        loadTranspositionTable()
-    
     for i in range(0,iteration):
+        if(stopPlay):
+            break
         gameState = Board()
         print(f"Playing iteration: {i}")
         while True:
-            move = getBestMove(gameState,gameState.turn,ai_player,useTransposition)
-            gameState.play(move[0],move[1])
+            if(stopPlay):
+                break
+            
+            player1.playTurn(gameState)
+
             winner = gameState.isGameEnd()
-            if(winner == MAX_PLAYER):
+            if(winner == Board.X):
                 xWins += 1
-                print(f"X Wins: {xWins}\nO Wins: {oWins}")
                 break
-            elif(winner == MIN_PLAYER):
+            elif(winner == Board.O):
                 oWins += 1
-                print(f"X Wins: {xWins}\nO Wins: {oWins}")
                 break
 
-    print(f"Elapsed: {time.time() - startTime}")
+            player2.playTurn(gameState)
 
-    if(useTransposition):
-        saveTranspositionTable()
+            winner = gameState.isGameEnd()
+            if(winner == Board.X):
+                xWins += 1
+                break
+            elif(winner == Board.O):
+                oWins += 1
+                break
 
-def computer_player_play(ai_player,useTransposition):
-    gameState = Board()
-
-    if(useTransposition):
-        loadTranspositionTable()
-
-    gameResult = 0
-    while True:
-        move = getBestMove(gameState,gameState.turn,ai_player,useTransposition)
-        gameState.play(move[0],move[1])
-        gameState.printBoard()
-        gameResult = gameState.isGameEnd()
+            #gameState.printBoard()
         
-        if(gameResult is not None):
-            break
+        gameState.printBoard()
+    print(f"Elapsed: {time.time() - startTime}")
+    print(f"X Wins: {xWins}, O Wins: {oWins}")
 
-        isMoveValid = -1
-        while(isMoveValid == -1):
-            inp = input("Your turn: ")
-            (piece,umove) = input_map(inp)
-            isMoveValid = gameState.play(piece,umove)
-
-        gameResult = gameState.isGameEnd()
-        if(gameResult is not None):
-            break
-    
-    gameState.printWinner()
-
-    if(useTransposition):
+    if(transposition):
         saveTranspositionTable()
+
 
 if __name__ == "__main__":
-    computer_computer_play(10,GOOD_AI_PLAYER,True)
+    play(AI_Player(GOOD_AI_PLAYER),RandomPlayer(),100,True)
