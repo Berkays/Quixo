@@ -17,7 +17,7 @@ class Board(object):
 
     def __init__(self,board=None,turn = 1):
         if(board == None):
-            self.board = np.zeros((5,5),dtype=int)
+            self.board = np.zeros((self.BOARD_SIZE + 1,self.BOARD_SIZE + 1),dtype=int)
             self.turn = turn
         else:
             self.board = np.copy(board.board)
@@ -35,6 +35,9 @@ class Board(object):
     def checkMove(self,piece,move):
         #Only blank and owned pieces
         if(not (self.board[piece] == self.BLANK or self.board[piece] == self.turn)):
+            return False
+
+        if(0 < piece[0] < self.BOARD_SIZE and 0 < piece[1] < self.BOARD_SIZE):
             return False
 
         possibleMoves = self.getPossiblePieceMoves(piece)
@@ -80,7 +83,7 @@ class Board(object):
             if(np.all(col == self.X) or np.all(col == self.O)):
                 return self.board[0,i]
         
-        return None
+        return 0
       
     def getPossiblePieceMoves(self,piece):
         row,col = piece
@@ -103,11 +106,11 @@ class Board(object):
         else:
             opponent = self.X
 
-        edgeMatrix = np.full((5,5),opponent)
+        edgeMatrix = np.full((self.BOARD_SIZE + 1,self.BOARD_SIZE + 1),opponent)
         edgeMatrix[0,:] = self.board[0,:]
-        edgeMatrix[4,:] = self.board[4,:]
+        edgeMatrix[self.BOARD_SIZE,:] = self.board[self.BOARD_SIZE,:]
         edgeMatrix[:,0] = self.board[:,0]
-        edgeMatrix[:,4] = self.board[:,4]
+        edgeMatrix[:,self.BOARD_SIZE] = self.board[:,self.BOARD_SIZE]
 
         edgeIndices = np.where(edgeMatrix != opponent)
         edgeIndices = np.column_stack((edgeIndices[0],edgeIndices[1]))
@@ -154,3 +157,14 @@ class Board(object):
             return "SLIDE_RIGHT"
         elif(direction == 3):
             return "SLIDE_DOWN"
+
+    def serialize(self):
+        return self.board
+        # b_size = (self.BOARD_SIZE + 1) ** 2
+        # feauture_vector_size = b_size + 0 # 5x5 + 1 for turn
+        # fv = np.zeros(feauture_vector_size)
+        # fv[0:b_size] = np.ravel(self.board)
+        # fv[-1] = self.turn * 1.0
+        # return fv
+        # k = np.ravel(self.board)
+        # return ''.join([str(i) for i in k.tolist()])

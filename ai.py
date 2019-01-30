@@ -1,70 +1,92 @@
 import math
-import random
-import time
-import hashlib
-import os
-import pickle
 import numpy as np
+from numpy import random
 from board import Board
 
-transpositionPath = "_t.dat"
-transpositionPlayer = Board.X
-transpositionTable = {}
+def alphabeta(board, alpha, beta, depth):
 
-def alphabeta(board,alpha,beta,depth):
-
-    score = evaluate(board,depth)
-    if(score is not None): # Return board value if hit terminal
-        return (score,None)
+    isTerminal = board.isGameEnd()
+    if (isTerminal != 0 or depth == 0):  # Return board value if we hit terminal
+        score = evaluate(board, depth)
+        return (score, None)
 
     depth -= 1
 
     bestMove = None
-    if(board.turn == Board.X):
+    if (board.turn == Board.X):
         for move in board.getPossibleMoves():
             s = Board(board)
-            s.play(move[0],move[1])
-            val = alphabeta(s,alpha,beta,depth)[0]
-
-            if(val > alpha):
+            s.play(move[0], move[1])
+            val = alphabeta(s, alpha, beta, depth)[0]
+            if (val > alpha):
                 alpha = val
                 bestMove = move
-            if(alpha >= beta):
+            if (alpha >= beta):
                 break
-        return (alpha,bestMove)
+        return (alpha, bestMove)
     else:
         for move in board.getPossibleMoves():
             s = Board(board)
-            s.play(move[0],move[1])
-            val = alphabeta(s,alpha,beta,depth)[0]
-
-            if(val < beta):
+            s.play(move[0], move[1])
+            val = alphabeta(s, alpha, beta, depth)[0]
+            if (val < beta):
                 beta = val
                 bestMove = move
-            if(alpha >= beta):
+            if (alpha >= beta):
                 break
-        return (beta,bestMove)
+        return (beta, bestMove)
 
-def evaluate(board,depth):
+
+def find_occurence(state, key):
+    occCount = 0
+    for r in range(0, 5):
+        row = state[r, :]
+        col = state[:, r]
+        y = np.where(row == key)[0]
+        z = np.where(col == key)[0]
+        if (len(y) == 4):
+            ok = (y[-1] - y[0] == len(y) - 1)
+            if (ok):
+                occCount += 1
+        if (len(z) == 4):
+            ok = (z[-1] - z[0] == len(z) - 1)
+            if (ok):
+                occCount += 1
+    return occCount
+
+# Evaluates the current game state
+def evaluate(board, depth):
     isTerminal = board.isGameEnd()
-    if(isTerminal == Board.X): # Maximizer won (X)
-        return 100 + depth # Less moves is better
-    elif(isTerminal == Board.O): # Minimizer Won (O)
-        return -100 - depth # Less moves is better
-    elif(depth == 0): # Compare owned piece counts if we reach tree depth limit
-        frequency = np.unique(board.board,return_counts=True)
-        if(len(frequency[0]) == 3): # Contains blank pieces
+    if (isTerminal == Board.X):  # Maximizer won (X)
+        return 100 + depth  # Less moves is better
+    elif (isTerminal == Board.O):  # Minimizer Won (O)
+        return -100 - depth  # Less moves is better
+    else:  # Compare owned piece counts if we reach tree depth limit
+        value = 0
+        occValue = find_occurence(board.board,board.turn) * 5
+
+        if(board.board[2,2] == board.X):
+            value += 20
+        elif(board.board[2,2] == board.O):
+            value -= 20
+
+        if(board.turn == Board.O):
+            occValue *= -1
+
+        frequency = np.unique(board.board, return_counts=True)
+        uniqueCount = len(frequency[0])
+        if (uniqueCount == 3):  # Contains blank pieces
             maximizerPieceCount = frequency[1][1]
             minimizerPieceCount = frequency[1][2]
-        else:
+        elif (uniqueCount > 1):
             maximizerPieceCount = frequency[1][0]
             minimizerPieceCount = frequency[1][1]
-            
-        return maximizerPieceCount - minimizerPieceCount
-    else:
-        return None
 
-def getBestMove(board,depthLevels,useTransposition=False):
+        value += (maximizerPieceCount - minimizerPieceCount) + occValue
+        return value
+
+# Return the best move using alphabeta search
+def getBestMove(board, depthLevels):
     possibleMoves = board.getPossibleMoves()
     possibleMoveCount = len(possibleMoves)
 
@@ -76,58 +98,6 @@ def getBestMove(board,depthLevels,useTransposition=False):
         else:
             break
 
-    move = None
-    if(useTransposition and board.turn == transpositionPlayer and depth >= 4):
-        move = getMoveFromTranspositionTable(board,depth)
-        if (move is not None):
-            return move
-
-    move = alphabeta(board,-math.inf,math.inf,depth)[1]
-
-    if(useTransposition and board.turn == transpositionPlayer and depth >= 4):
-        addToTranspositionTable(board,move,depth)
+    move = alphabeta(board, -math.inf, math.inf, depth)[1]
 
     return move
-
-def loadTranspositionTable():
-    setTranspositionPath()
-
-    if (os.path.isfile(transpositionPath)):
-        tableFile = open(transpositionPath,mode='rb')
-        transpositionTable = pickle.load(tableFile)
-        tableFile.close()
-        print(f"Loaded transposition table: {len(transpositionTable)} elements")
-
-def saveTranspositionTable():
-    global transpositionTable
-    tableFile = open(transpositionPath, mode='wb')
-    pickle.dump(transpositionTable,tableFile)
-    tableFile.close()
-    print(f"Saved transposition table: {transpositionPath}")
-
-def addToTranspositionTable(state,move,depth):
-    global transpositionTable
-    boardData = state.board.tobytes()
-    hash = hashlib.md5(boardData).hexdigest()
-    hash += hash + str(depth)
-    if(hash not in transpositionTable):
-        transpositionTable[hash] = move
-        print(f"{move} added to table")
-
-def getMoveFromTranspositionTable(state,depth):
-    global transpositionTable
-    boardData = state.board.tobytes()
-    hash = hashlib.md5(boardData).hexdigest()
-    hash += hash + str(depth)
-    if(hash in transpositionTable):
-        return transpositionTable[hash]
-    else:
-        return None
-
-def setTranspositionPath():
-    global transpositionPath
-    if (transpositionPlayer == Board.X):
-        transpositionPath = "x" + transpositionPath
-    else:
-        transpositionPath = "o" + transpositionPath
-    return
